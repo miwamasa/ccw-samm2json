@@ -22,7 +22,7 @@ $(document).ready(function() {
         console.log('Editor initialized successfully');
     } catch (error) {
         console.error('Initialization error:', error);
-        showMessage('初期化エラー: ' + error.message, 'danger');
+        showMessage('Initialization error: ' + error.message, 'danger');
     }
 });
 
@@ -214,7 +214,7 @@ function showFormForNode(node) {
     console.log('Node type:', nodeType, 'Node data:', nodeData);
 
     if (!nodeData) {
-        formEditor.html('<div class="empty-state"><div>📁</div><p>フォルダは編集できません</p></div>');
+        formEditor.html('<div class="empty-state"><div>📁</div><p>Folders cannot be edited</p></div>');
         return;
     }
 
@@ -231,7 +231,7 @@ function showFormForNode(node) {
             formHtml = buildEntityForm(nodeData);
             break;
         default:
-            formHtml = '<div class="empty-state"><div>❓</div><p>このタイプは編集できません</p></div>';
+            formHtml = '<div class="empty-state"><div>❓</div><p>This type cannot be edited</p></div>';
     }
 
     formEditor.html(formHtml);
@@ -246,14 +246,14 @@ function buildAspectForm(aspect) {
                 <input type="text" class="form-control form-control-sm" name="id" value="${aspect.id || ''}" readonly>
             </div>
             <div class="form-group">
-                <label class="form-label">名前 (英語)</label>
+                <label class="form-label">Name (English)</label>
                 <input type="text" class="form-control form-control-sm" name="preferredName_en" value="${aspect.preferredName?.en || ''}">
             </div>
             <div class="form-group">
-                <label class="form-label">説明 (英語)</label>
+                <label class="form-label">Description (English)</label>
                 <textarea class="form-control form-control-sm" name="description_en" rows="3">${aspect.description?.en || ''}</textarea>
             </div>
-            <button type="submit" class="btn btn-primary btn-sm">保存</button>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
         </form>
     `;
 }
@@ -266,15 +266,15 @@ function buildPropertyForm(property) {
                 <input type="text" class="form-control form-control-sm" name="id" value="${property.id || ''}" readonly>
             </div>
             <div class="form-group">
-                <label class="form-label">名前 (英語)</label>
+                <label class="form-label">Name (English)</label>
                 <input type="text" class="form-control form-control-sm" name="preferredName_en" value="${property.preferredName?.en || ''}">
             </div>
             <div class="form-group">
-                <label class="form-label">説明 (英語)</label>
+                <label class="form-label">Description (English)</label>
                 <textarea class="form-control form-control-sm" name="description_en" rows="2">${property.description?.en || ''}</textarea>
             </div>
             <div class="form-group">
-                <label class="form-label">Characteristic タイプ</label>
+                <label class="form-label">Characteristic Type</label>
                 <select class="form-control form-control-sm" name="characteristicType">
                     <option value="Text" ${property.characteristicType === 'Text' ? 'selected' : ''}>Text</option>
                     <option value="Boolean" ${property.characteristicType === 'Boolean' ? 'selected' : ''}>Boolean</option>
@@ -283,14 +283,14 @@ function buildPropertyForm(property) {
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label">サンプル値</label>
+                <label class="form-label">Example Value</label>
                 <input type="text" class="form-control form-control-sm" name="exampleValue" value="${property.exampleValue || ''}">
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="optional" id="optionalCheck" ${property.optional ? 'checked' : ''}>
-                <label class="form-check-label" for="optionalCheck">オプショナル</label>
+                <label class="form-check-label" for="optionalCheck">Optional</label>
             </div>
-            <button type="submit" class="btn btn-primary btn-sm mt-3">保存</button>
+            <button type="submit" class="btn btn-primary btn-sm mt-3">Save</button>
         </form>
     `;
 }
@@ -305,9 +305,9 @@ function buildEntityForm(entity) {
             const propName = prop ? (prop.preferredName?.en || propId) : propId;
             propertiesHtml += `<li class="list-group-item list-group-item-sm py-1">${propName}</li>`;
         });
-        propertiesHtml += '</ul><small class="form-text text-muted">ツリーから+Propertyボタンでプロパティを追加できます</small></div>';
+        propertiesHtml += '</ul><small class="form-text text-muted">Use +Property button in tree to add properties</small></div>';
     } else {
-        propertiesHtml = '<div class="form-group"><label class="form-label">Properties</label><p class="text-muted small">プロパティなし（+Propertyボタンで追加）</p></div>';
+        propertiesHtml = '<div class="form-group"><label class="form-label">Properties</label><p class="text-muted small">No properties (add with +Property button)</p></div>';
     }
 
     return `
@@ -317,11 +317,11 @@ function buildEntityForm(entity) {
                 <input type="text" class="form-control form-control-sm" name="id" value="${entity.id || ''}" readonly>
             </div>
             <div class="form-group">
-                <label class="form-label">名前 (英語)</label>
+                <label class="form-label">Name (English)</label>
                 <input type="text" class="form-control form-control-sm" name="preferredName_en" value="${entity.preferredName?.en || ''}">
             </div>
             <div class="form-group">
-                <label class="form-label">説明 (英語)</label>
+                <label class="form-label">Description (English)</label>
                 <textarea class="form-control form-control-sm" name="description_en" rows="2">${entity.description?.en || ''}</textarea>
             </div>
             <div class="form-check">
@@ -329,7 +329,7 @@ function buildEntityForm(entity) {
                 <label class="form-check-label" for="abstractCheck">Abstract Entity</label>
             </div>
             ${propertiesHtml}
-            <button type="submit" class="btn btn-primary btn-sm mt-3">保存</button>
+            <button type="submit" class="btn btn-primary btn-sm mt-3">Save</button>
         </form>
     `;
 }
@@ -404,7 +404,7 @@ function saveForm() {
         $('#treeView').jstree('rename_node', selectedNode, updates.preferredName.en);
     }
 
-    showMessage('保存しました', 'success');
+    showMessage('Saved', 'success');
 }
 
 function setupEventHandlers() {
@@ -494,7 +494,7 @@ function addProperty() {
 
     if (!nodeType || (nodeType !== 'aspect' && nodeType !== 'entity')) {
         console.error('Cannot add property - no aspect or entity selected');
-        showMessage('AspectまたはEntityを選択してください', 'warning');
+        showMessage('Please select an Aspect or Entity', 'warning');
         return;
     }
 
@@ -534,7 +534,7 @@ function addProperty() {
     console.log('Current model:', currentModel);
 
     buildTree();
-    showMessage('Propertyを追加しました', 'success');
+    showMessage('Property added', 'success');
 }
 
 function addEntity() {
@@ -556,7 +556,7 @@ function addEntity() {
     console.log('Current model:', currentModel);
 
     buildTree();
-    showMessage('Entityを追加しました', 'success');
+    showMessage('Entity added', 'success');
 }
 
 function deleteNode() {
@@ -565,7 +565,7 @@ function deleteNode() {
         return;
     }
 
-    if (!confirm('この要素を削除しますか？')) return;
+    if (!confirm('Delete this element?')) return;
 
     console.log('Deleting node:', selectedNode);
 
@@ -613,10 +613,10 @@ function deleteNode() {
     }
 
     buildTree();
-    $('#formEditor').html('<div class="empty-state"><div>📝</div><p>ツリーから要素を選択して編集</p></div>');
+    $('#formEditor').html('<div class="empty-state"><div>📝</div><p>Select an element from tree to edit</p></div>');
     selectedNode = null;
     updateToolbarButtons();
-    showMessage('削除しました', 'success');
+    showMessage('Deleted', 'success');
 }
 
 async function loadExample(exampleName) {
@@ -699,12 +699,12 @@ async function loadExample(exampleName) {
                 // Auto-generate turtle in output
                 $('#turtleOutput').text(result.turtle);
 
-                showMessage(`サンプル "${exampleName}" を読み込みました`, 'success');
+                showMessage(`Example "${exampleName}" loaded`, 'success');
             }
         }
     } catch (error) {
         console.error('Load error:', error);
-        showMessage('読み込みエラー: ' + error.message, 'danger');
+        showMessage('Load error: ' + error.message, 'danger');
     }
 }
 
@@ -714,14 +714,14 @@ async function generateTurtle() {
     // If we have original turtle, use it
     if (currentModel._originalTurtle) {
         $('#turtleOutput').text(currentModel._originalTurtle);
-        showMessage('Turtleを表示しました', 'info');
+        showMessage('Turtle displayed', 'info');
         return;
     }
 
     // Otherwise, generate from model
     const turtle = modelToTurtle(currentModel);
     $('#turtleOutput').text(turtle);
-    showMessage('Turtleを生成しました', 'success');
+    showMessage('Turtle generated', 'success');
 }
 
 function modelToTurtle(model) {
@@ -773,7 +773,7 @@ async function generateFromTurtle(type) {
     const turtle = $('#turtleOutput').text();
 
     if (!turtle || turtle.startsWith('//')) {
-        showMessage('先にTurtleを生成してください', 'warning');
+        showMessage('Please generate Turtle first', 'warning');
         return;
     }
 
@@ -794,20 +794,20 @@ async function generateFromTurtle(type) {
             const output = type === 'schema' ? result.schema : result.instance;
             const formatted = JSON.stringify(output, null, 2);
             $(`#${type}Output`).text(formatted);
-            showMessage(`JSON ${type} を生成しました`, 'success');
+            showMessage(`JSON ${type} generated`, 'success');
         } else {
-            showMessage('生成エラー: ' + result.error, 'danger');
+            showMessage('Generation error: ' + result.error, 'danger');
         }
     } catch (error) {
         console.error('Generation error:', error);
-        showMessage('生成エラー: ' + error.message, 'danger');
+        showMessage('Generation error: ' + error.message, 'danger');
     }
 }
 
 function copyToClipboard(elementId) {
     const text = $('#' + elementId).text();
     navigator.clipboard.writeText(text).then(() => {
-        showMessage('クリップボードにコピーしました', 'success');
+        showMessage('Copied to clipboard', 'success');
     });
 }
 

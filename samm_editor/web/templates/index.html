@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -111,7 +111,7 @@
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">SAMM Model Editor</span>
             <span class="navbar-text text-white">
-                Semantic Aspect Meta Model エディタ
+                Semantic Aspect Meta Model Editor
             </span>
         </div>
     </nav>
@@ -123,7 +123,7 @@
                 <!-- Tree View Section -->
                 <div class="tree-section">
                     <div class="section-header">
-                        <h6>モデル構造</h6>
+                        <h6>Model Structure</h6>
                     </div>
 
                     <!-- Toolbar -->
@@ -138,12 +138,12 @@
                         </div>
                         <div class="btn-group btn-group-sm me-2" role="group">
                             <button type="button" class="btn btn-danger" id="deleteNodeBtn" disabled>
-                                削除
+                                Delete
                             </button>
                         </div>
                         <div class="btn-group btn-group-sm" role="group">
                             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                サンプル
+                                Examples
                             </button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item load-example" href="#" data-example="Movement">Movement</a></li>
@@ -162,13 +162,13 @@
                 <!-- Form Editor Section -->
                 <div class="form-section">
                     <div class="section-header">
-                        <h6>プロパティエディタ</h6>
+                        <h6>Property Editor</h6>
                     </div>
 
                     <div id="formEditor">
                         <div class="empty-state">
                             <div>📝</div>
-                            <p>ツリーから要素を選択して編集</p>
+                            <p>Select an element from tree to edit</p>
                         </div>
                     </div>
                 </div>
@@ -184,18 +184,18 @@
 
                     <div class="btn-group btn-group-sm mb-2" role="group">
                         <button type="button" class="btn btn-primary" id="generateTurtleBtn">
-                            生成
+                            Generate
                         </button>
                         <button type="button" class="btn btn-outline-secondary" id="copyTurtleBtn">
-                            コピー
+                            Copy
                         </button>
                         <button type="button" class="btn btn-outline-secondary" id="downloadTurtleBtn">
-                            ダウンロード
+                            Download
                         </button>
                     </div>
 
                     <div class="result-area">
-                        <pre id="turtleOutput"><code>// Turtle がここに生成されます</code></pre>
+                        <pre id="turtleOutput"><code>// Turtle will be generated here</code></pre>
                     </div>
                 </div>
 
@@ -225,13 +225,13 @@
                         <div class="tab-pane fade show active" id="schema-pane" role="tabpanel">
                             <div class="btn-group btn-group-sm mb-2" role="group">
                                 <button type="button" class="btn btn-primary" id="generateSchemaBtn">
-                                    生成
+                                    Generate
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="copySchemaBtn">
-                                    コピー
+                                    Copy
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="downloadSchemaBtn">
-                                    ダウンロード
+                                    Download
                                 </button>
                             </div>
                             <div class="result-area" style="height: calc(100% - 50px);">
@@ -243,13 +243,13 @@
                         <div class="tab-pane fade" id="instance-pane" role="tabpanel">
                             <div class="btn-group btn-group-sm mb-2" role="group">
                                 <button type="button" class="btn btn-primary" id="generateInstanceBtn">
-                                    生成
+                                    Generate
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="copyInstanceBtn">
-                                    コピー
+                                    Copy
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="downloadInstanceBtn">
-                                    ダウンロード
+                                    Download
                                 </button>
                             </div>
                             <div class="result-area" style="height: calc(100% - 50px);">
