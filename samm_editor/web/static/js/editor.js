@@ -176,8 +176,9 @@ function modelToTreeData(model) {
 function showFormForNode(node) {
     console.log('Showing form for node:', node);
     const formEditor = $('#formEditor');
-    const nodeType = node.original ? node.original.type : node.type;
-    const nodeData = node.original ? node.original.data : node.data;
+    // Check node.data first (where jsTree stores our data), then fall back to node.original
+    const nodeType = node.type || (node.original ? node.original.type : null);
+    const nodeData = node.data || (node.original ? node.original.data : null);
 
     console.log('Node type:', nodeType, 'Node data:', nodeData);
 
@@ -295,7 +296,8 @@ function attachFormHandlers() {
 }
 
 function saveForm() {
-    const nodeData = selectedNode && selectedNode.original ? selectedNode.original.data : (selectedNode ? selectedNode.data : null);
+    // Check node.data first (where jsTree stores our data), then fall back to node.original
+    const nodeData = selectedNode ? (selectedNode.data || (selectedNode.original ? selectedNode.original.data : null)) : null;
 
     if (!selectedNode || !nodeData) {
         console.error('No node selected or no data');
@@ -406,8 +408,9 @@ function setupEventHandlers() {
 
 function updateToolbarButtons() {
     const hasSelection = selectedNode !== null;
-    const nodeType = selectedNode && selectedNode.original ? selectedNode.original.type : (selectedNode ? selectedNode.type : null);
-    const nodeData = selectedNode && selectedNode.original ? selectedNode.original.data : (selectedNode ? selectedNode.data : null);
+    // Check node.data first (where jsTree stores our data), then fall back to node.original
+    const nodeType = selectedNode ? (selectedNode.type || (selectedNode.original ? selectedNode.original.type : null)) : null;
+    const nodeData = selectedNode ? (selectedNode.data || (selectedNode.original ? selectedNode.original.data : null)) : null;
 
     const isAspect = nodeType === 'aspect';
     const isFolder = nodeType === 'folder';
@@ -475,8 +478,9 @@ function deleteNode() {
 
     console.log('Deleting node:', selectedNode);
 
-    const nodeType = selectedNode.original ? selectedNode.original.type : selectedNode.type;
-    const nodeData = selectedNode.original ? selectedNode.original.data : selectedNode.data;
+    // Check node.data first (where jsTree stores our data), then fall back to node.original
+    const nodeType = selectedNode.type || (selectedNode.original ? selectedNode.original.type : null);
+    const nodeData = selectedNode.data || (selectedNode.original ? selectedNode.original.data : null);
 
     if (!nodeData || !nodeData.id) {
         console.error('No node data or ID');
