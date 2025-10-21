@@ -812,8 +812,16 @@ async function loadTurtleContent(turtleContent, sourceName = 'file') {
 
         if (!parseData.success) {
             showMessage('Parse error: ' + (parseData.error || 'Unknown error'), 'danger');
+            console.error('Parse failed:', parseData.error);
             return;
         }
+
+        // Debug: Log what we received
+        console.log('Namespace:', parseData.info.namespace);
+        console.log('Properties count:', parseData.info.properties ? parseData.info.properties.length : 0);
+        console.log('Entities count:', parseData.info.entities ? parseData.info.entities.length : 0);
+        console.log('Characteristics count:', parseData.info.characteristics ? parseData.info.characteristics.length : 0);
+        console.log('Aspect:', parseData.info.aspect);
 
         // Create model from parsed data
         currentModel.namespace = parseData.info.namespace;
