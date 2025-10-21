@@ -84,17 +84,22 @@ def parse_turtle():
                 'preferredName': prop.preferred_name.values if prop.preferred_name else {'en': ''},
                 'description': prop.description.values if prop.description else {'en': ''},
                 'optional': prop.optional,
-                'characteristicType': 'Text',  # Default
+                'characteristic': None,  # Reference to characteristic ID
+                'characteristicType': 'Text',  # Type of the characteristic
             }
             if prop.characteristic:
-                # prop.characteristic is a Characteristic object, not a string
+                # prop.characteristic is a Characteristic object
                 if isinstance(prop.characteristic, str):
                     # If it's a URN string (backward compatibility)
-                    char_type = prop.characteristic.split('#')[-1] if '#' in prop.characteristic else 'Text'
+                    char_id = prop.characteristic.split('#')[-1] if '#' in prop.characteristic else prop.characteristic
+                    prop_info['characteristic'] = char_id
+                    prop_info['characteristicType'] = 'Text'  # Unknown type
                 else:
                     # It's a Characteristic object
-                    char_type = prop.characteristic.urn.split('#')[-1] if '#' in prop.characteristic.urn else 'Text'
-                prop_info['characteristicType'] = char_type
+                    char_id = prop.characteristic.urn.split('#')[-1] if '#' in prop.characteristic.urn else str(prop.characteristic.urn)
+                    char_type = prop.characteristic.characteristic_type if hasattr(prop.characteristic, 'characteristic_type') else 'Text'
+                    prop_info['characteristic'] = char_id
+                    prop_info['characteristicType'] = char_type
             info['properties'].append(prop_info)
 
         for char_urn, char in model.characteristics.items():

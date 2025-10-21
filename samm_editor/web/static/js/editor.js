@@ -286,6 +286,11 @@ function buildAspectForm(aspect) {
 }
 
 function buildPropertyForm(property) {
+    // Get characteristic info
+    const charRef = property.characteristic || '';
+    const charType = property.characteristicType || 'Text';
+    const charInfo = charRef ? `${charRef} (${charType})` : charType;
+
     return `
         <form id="nodeForm">
             <div class="form-group">
@@ -301,13 +306,16 @@ function buildPropertyForm(property) {
                 <textarea class="form-control form-control-sm" name="description_en" rows="2">${property.description?.en || ''}</textarea>
             </div>
             <div class="form-group">
-                <label class="form-label">Characteristic Type</label>
-                <select class="form-control form-control-sm" name="characteristicType">
-                    <option value="Text" ${property.characteristicType === 'Text' ? 'selected' : ''}>Text</option>
-                    <option value="Boolean" ${property.characteristicType === 'Boolean' ? 'selected' : ''}>Boolean</option>
-                    <option value="Measurement" ${property.characteristicType === 'Measurement' ? 'selected' : ''}>Measurement</option>
-                    <option value="Enumeration" ${property.characteristicType === 'Enumeration' ? 'selected' : ''}>Enumeration</option>
-                </select>
+                <label class="form-label">Characteristic</label>
+                <input type="text" class="form-control form-control-sm" name="characteristic"
+                    value="${charRef}"
+                    placeholder="e.g., CarbonFootprint, Text, Boolean">
+                <small class="form-text text-muted">Reference to a characteristic (or use built-in: Text, Boolean, Timestamp, etc.)</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Characteristic Type (Read-only)</label>
+                <input type="text" class="form-control form-control-sm" value="${charInfo}" readonly>
+                <small class="form-text text-muted">Type of the referenced characteristic</small>
             </div>
             <div class="form-group">
                 <label class="form-label">Example Value</label>
@@ -640,6 +648,7 @@ function addProperty() {
         type: 'property',
         preferredName: { en: 'New Property' },
         description: { en: '' },
+        characteristic: null,
         characteristicType: 'Text',
         optional: false
     };
@@ -838,6 +847,7 @@ async function loadTurtleContent(turtleContent, sourceName = 'file') {
                     type: 'property',
                     preferredName: prop.preferredName || { en: '' },
                     description: prop.description || { en: '' },
+                    characteristic: prop.characteristic || null,
                     characteristicType: prop.characteristicType || 'Text',
                     optional: prop.optional || false
                 };
