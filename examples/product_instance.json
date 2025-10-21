@@ -1,0 +1,16 @@
+{
+  "products": [
+    {
+      "productId": "PROD-123",
+      "productName": "Widget",
+      "price": 29.99,
+      "inStock": true
+    },
+    {
+      "productId": "PROD-123",
+      "productName": "Widget",
+      "price": 29.99,
+      "inStock": true
+    }
+  ]
+}

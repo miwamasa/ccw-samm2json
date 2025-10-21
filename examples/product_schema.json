@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "products": {
+      "description": "List of products in the catalog",
+      "title": "Products",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Product"
+      }
+    }
+  },
+  "definitions": {
+    "Product": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "description": "Unique identifier for the product",
+          "title": "Product ID",
+          "type": "string"
+        },
+        "productName": {
+          "description": "Name of the product",
+          "title": "Product Name",
+          "type": "string"
+        },
+        "price": {
+          "description": "Price in euros",
+          "title": "Price",
+          "type": "number"
+        },
+        "inStock": {
+          "description": "Whether the product is in stock",
+          "title": "In Stock",
+          "type": "boolean"
+        }
+      },
+      "description": "A product with its details",
+      "required": [
+        "productId",
+        "productName",
+        "price",
+        "inStock"
+      ]
+    }
+  },
+  "description": "A catalog containing product information",
+  "title": "Product Catalog",
+  "required": [
+    "products"
+  ]
+}
