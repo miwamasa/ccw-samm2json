@@ -193,6 +193,31 @@ def validate(input_file):
         sys.exit(1)
 
 
+@cli.command()
+@click.option('--host', default='127.0.0.1', help='Host to bind to')
+@click.option('--port', default=5000, help='Port to bind to')
+@click.option('--debug/--no-debug', default=True, help='Enable debug mode')
+def web(host, port, debug):
+    """Launch the web-based SAMM model editor."""
+    try:
+        from .web.app import run_app
+
+        click.echo("Starting SAMM Web Editor...")
+        click.echo(f"Open your browser and navigate to: http://{host}:{port}")
+        click.echo("Press Ctrl+C to stop the server")
+        click.echo()
+
+        run_app(host=host, port=port, debug=debug)
+
+    except ImportError:
+        click.echo("Error: Flask is required for the web editor.", err=True)
+        click.echo("Install it with: pip install flask", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
 def main():
     """Main entry point."""
     cli()
