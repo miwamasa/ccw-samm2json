@@ -54,21 +54,36 @@ def parse_turtle():
                 'urn': model.aspect.urn,
                 'name': model.aspect.preferred_name.values.get('en', '') if model.aspect.preferred_name else '',
                 'description': model.aspect.description.values.get('en', '') if model.aspect.description else '',
+                'properties': [p.split('#')[1] if '#' in p else p for p in model.aspect.properties],
                 'properties_count': len(model.aspect.properties),
                 'operations_count': len(model.aspect.operations),
                 'events_count': len(model.aspect.events)
             }
 
         for entity_urn, entity in model.entities.items():
-            info['entities'].append({
+            entity_info = {
                 'urn': entity_urn,
-                'name': entity.preferred_name.values.get('en', '') if entity.preferred_name else '',
-                'is_abstract': entity.is_abstract,
-                'properties_count': len(entity.properties)
-            })
+                'id': entity_urn.split('#')[1] if '#' in entity_urn else entity_urn,
+                'preferredName': entity.preferred_name.values if entity.preferred_name else {'en': ''},
+                'description': entity.description.values if entity.description else {'en': ''},
+                'isAbstract': entity.is_abstract,
+                'properties': [p.split('#')[1] if '#' in p else p for p in entity.properties]
+            }
+            info['entities'].append(entity_info)
 
-        for prop_urn in model.properties.keys():
-            info['properties'].append(prop_urn)
+        for prop_urn, prop in model.properties.items():
+            prop_info = {
+                'urn': prop_urn,
+                'id': prop_urn.split('#')[1] if '#' in prop_urn else prop_urn,
+                'preferredName': prop.preferred_name.values if prop.preferred_name else {'en': ''},
+                'description': prop.description.values if prop.description else {'en': ''},
+                'optional': prop.optional,
+                'characteristicType': 'Text',  # Simplified for now
+            }
+            if prop.characteristic:
+                char_type = prop.characteristic.split('#')[-1] if '#' in prop.characteristic else 'Text'
+                prop_info['characteristicType'] = char_type
+            info['properties'].append(prop_info)
 
         for char_urn in model.characteristics.keys():
             info['characteristics'].append(char_urn)

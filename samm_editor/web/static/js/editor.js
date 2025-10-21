@@ -527,9 +527,43 @@ async function loadExample(exampleName) {
             console.log('Parse result:', parseData);
 
             if (parseData.success) {
-                // Create a simplified model for tree display
+                // Create model from parsed data
                 currentModel.namespace = parseData.info.namespace;
+                currentModel.properties = {};
+                currentModel.entities = {};
+                currentModel.characteristics = {};
 
+                // Populate properties
+                if (parseData.info.properties) {
+                    parseData.info.properties.forEach(prop => {
+                        currentModel.properties[prop.id] = {
+                            id: prop.id,
+                            urn: prop.urn,
+                            type: 'property',
+                            preferredName: prop.preferredName || { en: '' },
+                            description: prop.description || { en: '' },
+                            characteristicType: prop.characteristicType || 'Text',
+                            optional: prop.optional || false
+                        };
+                    });
+                }
+
+                // Populate entities
+                if (parseData.info.entities) {
+                    parseData.info.entities.forEach(entity => {
+                        currentModel.entities[entity.id] = {
+                            id: entity.id,
+                            urn: entity.urn,
+                            type: 'entity',
+                            preferredName: entity.preferredName || { en: '' },
+                            description: entity.description || { en: '' },
+                            isAbstract: entity.isAbstract || false,
+                            properties: entity.properties || []
+                        };
+                    });
+                }
+
+                // Create aspect with property references
                 if (parseData.info.aspect) {
                     const aspectId = parseData.info.aspect.urn.split('#')[1];
                     currentModel.aspect = {
@@ -538,15 +572,13 @@ async function loadExample(exampleName) {
                         type: 'aspect',
                         preferredName: { en: parseData.info.aspect.name },
                         description: { en: parseData.info.aspect.description },
-                        properties: [],
+                        properties: parseData.info.aspect.properties || [],
                         operations: [],
                         events: []
                     };
                 }
 
-                // For now, just show the aspect - properties will be empty
-                // User can view/edit the turtle directly
-                console.log('Model updated:', currentModel);
+                console.log('Model fully loaded:', currentModel);
                 buildTree();
 
                 // Auto-generate turtle in output
