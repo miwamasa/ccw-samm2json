@@ -70,7 +70,14 @@ function buildTree() {
                 'name': 'default',
                 'responsive': true
             }
-        }
+        },
+        'types': {
+            'aspect': { 'icon': '📦' },
+            'folder': { 'icon': '📁' },
+            'property': { 'icon': '🔹' },
+            'entity': { 'icon': '📄' }
+        },
+        'plugins': ['types']
     });
 
     // Handle node selection
@@ -169,8 +176,10 @@ function modelToTreeData(model) {
 function showFormForNode(node) {
     console.log('Showing form for node:', node);
     const formEditor = $('#formEditor');
-    const nodeType = node.type;
-    const nodeData = node.data;
+    const nodeType = node.original ? node.original.type : node.type;
+    const nodeData = node.original ? node.original.data : node.data;
+
+    console.log('Node type:', nodeType, 'Node data:', nodeData);
 
     if (!nodeData) {
         formEditor.html('<div class="empty-state"><div>📁</div><p>フォルダは編集できません</p></div>');
@@ -286,8 +295,10 @@ function attachFormHandlers() {
 }
 
 function saveForm() {
-    if (!selectedNode || !selectedNode.data) {
-        console.error('No node selected');
+    const nodeData = selectedNode && selectedNode.original ? selectedNode.original.data : (selectedNode ? selectedNode.data : null);
+
+    if (!selectedNode || !nodeData) {
+        console.error('No node selected or no data');
         return;
     }
 
@@ -313,17 +324,17 @@ function saveForm() {
     }
 
     // Handle unchecked checkboxes
-    if (!formData.has('optional') && selectedNode.data.hasOwnProperty('optional')) {
+    if (!formData.has('optional') && nodeData.hasOwnProperty('optional')) {
         updates.optional = false;
     }
-    if (!formData.has('isAbstract') && selectedNode.data.hasOwnProperty('isAbstract')) {
+    if (!formData.has('isAbstract') && nodeData.hasOwnProperty('isAbstract')) {
         updates.isAbstract = false;
     }
 
     console.log('Updates:', updates);
 
     // Update model
-    Object.assign(selectedNode.data, updates);
+    Object.assign(nodeData, updates);
 
     // Update tree node text
     if (updates.preferredName && updates.preferredName.en) {
@@ -395,15 +406,18 @@ function setupEventHandlers() {
 
 function updateToolbarButtons() {
     const hasSelection = selectedNode !== null;
-    const isAspect = selectedNode && selectedNode.type === 'aspect';
-    const isFolder = selectedNode && selectedNode.type === 'folder';
-    const isDeletable = hasSelection && !isAspect && !isFolder && selectedNode.data;
+    const nodeType = selectedNode && selectedNode.original ? selectedNode.original.type : (selectedNode ? selectedNode.type : null);
+    const nodeData = selectedNode && selectedNode.original ? selectedNode.original.data : (selectedNode ? selectedNode.data : null);
+
+    const isAspect = nodeType === 'aspect';
+    const isFolder = nodeType === 'folder';
+    const isDeletable = hasSelection && !isAspect && !isFolder && nodeData;
 
     $('#addPropertyBtn').prop('disabled', !isAspect);
     $('#addEntityBtn').prop('disabled', !isAspect);
     $('#deleteNodeBtn').prop('disabled', !isDeletable);
 
-    console.log('Toolbar updated - isAspect:', isAspect, 'isFolder:', isFolder, 'isDeletable:', isDeletable);
+    console.log('Toolbar updated - nodeType:', nodeType, 'isAspect:', isAspect, 'isFolder:', isFolder, 'isDeletable:', isDeletable);
 }
 
 function addProperty() {
@@ -461,8 +475,15 @@ function deleteNode() {
 
     console.log('Deleting node:', selectedNode);
 
-    const nodeId = selectedNode.data.id;
-    const nodeType = selectedNode.type;
+    const nodeType = selectedNode.original ? selectedNode.original.type : selectedNode.type;
+    const nodeData = selectedNode.original ? selectedNode.original.data : selectedNode.data;
+
+    if (!nodeData || !nodeData.id) {
+        console.error('No node data or ID');
+        return;
+    }
+
+    const nodeId = nodeData.id;
 
     if (nodeType === 'property') {
         delete currentModel.properties[nodeId];
