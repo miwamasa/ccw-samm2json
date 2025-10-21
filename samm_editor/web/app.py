@@ -50,24 +50,30 @@ def parse_turtle():
         }
 
         if model.aspect:
+            # Extract property IDs from Property objects
+            prop_ids = [p.urn.split('#')[1] if '#' in p.urn else p.urn for p in model.aspect.properties]
+
             info['aspect'] = {
                 'urn': model.aspect.urn,
                 'name': model.aspect.preferred_name.values.get('en', '') if model.aspect.preferred_name else '',
                 'description': model.aspect.description.values.get('en', '') if model.aspect.description else '',
-                'properties': [p.split('#')[1] if '#' in p else p for p in model.aspect.properties],
+                'properties': prop_ids,
                 'properties_count': len(model.aspect.properties),
                 'operations_count': len(model.aspect.operations),
                 'events_count': len(model.aspect.events)
             }
 
         for entity_urn, entity in model.entities.items():
+            # Extract property IDs from Property objects
+            entity_prop_ids = [p.urn.split('#')[1] if '#' in p.urn else p.urn for p in entity.properties]
+
             entity_info = {
                 'urn': entity_urn,
                 'id': entity_urn.split('#')[1] if '#' in entity_urn else entity_urn,
                 'preferredName': entity.preferred_name.values if entity.preferred_name else {'en': ''},
                 'description': entity.description.values if entity.description else {'en': ''},
                 'isAbstract': entity.is_abstract,
-                'properties': [p.split('#')[1] if '#' in p else p for p in entity.properties]
+                'properties': entity_prop_ids
             }
             info['entities'].append(entity_info)
 
@@ -78,10 +84,16 @@ def parse_turtle():
                 'preferredName': prop.preferred_name.values if prop.preferred_name else {'en': ''},
                 'description': prop.description.values if prop.description else {'en': ''},
                 'optional': prop.optional,
-                'characteristicType': 'Text',  # Simplified for now
+                'characteristicType': 'Text',  # Default
             }
             if prop.characteristic:
-                char_type = prop.characteristic.split('#')[-1] if '#' in prop.characteristic else 'Text'
+                # prop.characteristic is a Characteristic object, not a string
+                if isinstance(prop.characteristic, str):
+                    # If it's a URN string (backward compatibility)
+                    char_type = prop.characteristic.split('#')[-1] if '#' in prop.characteristic else 'Text'
+                else:
+                    # It's a Characteristic object
+                    char_type = prop.characteristic.urn.split('#')[-1] if '#' in prop.characteristic.urn else 'Text'
                 prop_info['characteristicType'] = char_type
             info['properties'].append(prop_info)
 
