@@ -335,8 +335,23 @@ function saveForm() {
 
     console.log('Updates:', updates);
 
-    // Update model
+    // Update the data object
     Object.assign(nodeData, updates);
+
+    // IMPORTANT: Also update currentModel directly to ensure changes persist
+    const nodeId = nodeData.id;
+    const nodeType = selectedNode.type || (selectedNode.original ? selectedNode.original.type : null);
+
+    if (nodeType === 'property' && currentModel.properties[nodeId]) {
+        Object.assign(currentModel.properties[nodeId], updates);
+        console.log('Updated currentModel.properties[' + nodeId + ']:', currentModel.properties[nodeId]);
+    } else if (nodeType === 'entity' && currentModel.entities[nodeId]) {
+        Object.assign(currentModel.entities[nodeId], updates);
+        console.log('Updated currentModel.entities[' + nodeId + ']:', currentModel.entities[nodeId]);
+    } else if (nodeType === 'aspect' && currentModel.aspect) {
+        Object.assign(currentModel.aspect, updates);
+        console.log('Updated currentModel.aspect:', currentModel.aspect);
+    }
 
     // Update tree node text
     if (updates.preferredName && updates.preferredName.en) {
