@@ -75,7 +75,8 @@ function buildTree() {
             'aspect': { 'icon': '📦' },
             'folder': { 'icon': '📁' },
             'property': { 'icon': '🔹' },
-            'entity': { 'icon': '📄' }
+            'entity': { 'icon': '📄' },
+            'characteristic': { 'icon': '⚙️' }
         },
         'plugins': ['types']
     });
@@ -196,6 +197,29 @@ function modelToTreeData(model) {
 
         aspectNode.children.push(entitiesFolder);
 
+        // Add Characteristics folder
+        const characteristicsFolder = {
+            id: 'folder_characteristics',
+            text: 'Characteristics (' + Object.keys(model.characteristics).length + ')',
+            type: 'folder',
+            icon: '📁',
+            state: { opened: false },
+            children: []
+        };
+
+        Object.keys(model.characteristics).forEach(charId => {
+            const char = model.characteristics[charId];
+            characteristicsFolder.children.push({
+                id: 'characteristic_' + charId,
+                text: char.preferredName?.en || charId,
+                type: 'characteristic',
+                icon: '⚙️',
+                data: char
+            });
+        });
+
+        aspectNode.children.push(characteristicsFolder);
+
         nodes.push(aspectNode);
     } else {
         console.error('No aspect in model!');
@@ -229,6 +253,9 @@ function showFormForNode(node) {
             break;
         case 'entity':
             formHtml = buildEntityForm(nodeData);
+            break;
+        case 'characteristic':
+            formHtml = buildCharacteristicForm(nodeData);
             break;
         default:
             formHtml = '<div class="empty-state"><div>❓</div><p>This type cannot be edited</p></div>';
@@ -334,6 +361,89 @@ function buildEntityForm(entity) {
     `;
 }
 
+function buildCharacteristicForm(characteristic) {
+    // Determine characteristic type
+    const charType = characteristic.characteristicType || characteristic.characteristic_type || 'Text';
+
+    let extraFields = '';
+
+    // Add type-specific fields
+    if (charType === 'Measurement') {
+        extraFields = `
+            <div class="form-group">
+                <label class="form-label">Unit</label>
+                <input type="text" class="form-control form-control-sm" name="unit"
+                    value="${characteristic.unit || ''}"
+                    placeholder="e.g., unit:metre, unit:kilogram">
+                <small class="form-text text-muted">SAMM unit URN (e.g., unit:euro)</small>
+            </div>
+        `;
+    } else if (charType === 'Enumeration') {
+        const values = characteristic.values || [];
+        const valuesStr = Array.isArray(values) ? values.join(', ') : '';
+        extraFields = `
+            <div class="form-group">
+                <label class="form-label">Enumeration Values</label>
+                <input type="text" class="form-control form-control-sm" name="enumerationValues"
+                    value="${valuesStr}"
+                    placeholder="value1, value2, value3">
+                <small class="form-text text-muted">Comma-separated values</small>
+            </div>
+        `;
+    } else if (charType === 'List' || charType === 'Set' || charType === 'Collection') {
+        extraFields = `
+            <div class="form-group">
+                <label class="form-label">Element Type</label>
+                <input type="text" class="form-control form-control-sm" name="elementCharacteristic"
+                    value="${characteristic.elementCharacteristic || characteristic.element_characteristic || ''}"
+                    placeholder="e.g., samm-c:Text or custom characteristic">
+                <small class="form-text text-muted">Characteristic type for collection elements</small>
+            </div>
+        `;
+    }
+
+    return `
+        <form id="nodeForm">
+            <div class="form-group">
+                <label class="form-label">ID</label>
+                <input type="text" class="form-control form-control-sm" name="id" value="${characteristic.id || ''}" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Name (English)</label>
+                <input type="text" class="form-control form-control-sm" name="preferredName_en" value="${characteristic.preferredName?.en || ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description (English)</label>
+                <textarea class="form-control form-control-sm" name="description_en" rows="2">${characteristic.description?.en || ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Characteristic Type</label>
+                <select class="form-control form-control-sm" name="characteristicType" id="charTypeSelect">
+                    <option value="Text" ${charType === 'Text' ? 'selected' : ''}>Text</option>
+                    <option value="Boolean" ${charType === 'Boolean' ? 'selected' : ''}>Boolean</option>
+                    <option value="Timestamp" ${charType === 'Timestamp' ? 'selected' : ''}>Timestamp</option>
+                    <option value="Measurement" ${charType === 'Measurement' ? 'selected' : ''}>Measurement</option>
+                    <option value="Enumeration" ${charType === 'Enumeration' ? 'selected' : ''}>Enumeration</option>
+                    <option value="List" ${charType === 'List' ? 'selected' : ''}>List</option>
+                    <option value="Set" ${charType === 'Set' ? 'selected' : ''}>Set</option>
+                    <option value="Collection" ${charType === 'Collection' ? 'selected' : ''}>Collection</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Data Type</label>
+                <input type="text" class="form-control form-control-sm" name="dataType"
+                    value="${characteristic.dataType || characteristic.data_type || ''}"
+                    placeholder="e.g., xsd:string, xsd:boolean">
+                <small class="form-text text-muted">XSD data type or Entity URN</small>
+            </div>
+            <div id="charTypeSpecificFields">
+                ${extraFields}
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm mt-3">Save</button>
+        </form>
+    `;
+}
+
 function attachFormHandlers() {
     $('#nodeForm').off('submit').on('submit', function(e) {
         e.preventDefault();
@@ -366,6 +476,9 @@ function saveForm() {
             updates.description[lang] = value;
         } else if (key === 'optional' || key === 'isAbstract') {
             updates[key] = true;  // checkbox is checked
+        } else if (key === 'enumerationValues') {
+            // Convert comma-separated string to array
+            updates.values = value.split(',').map(v => v.trim()).filter(v => v);
         } else {
             updates[key] = value;
         }
@@ -397,6 +510,9 @@ function saveForm() {
     } else if (nodeType === 'aspect' && currentModel.aspect) {
         Object.assign(currentModel.aspect, updates);
         console.log('Updated currentModel.aspect:', currentModel.aspect);
+    } else if (nodeType === 'characteristic' && currentModel.characteristics[nodeId]) {
+        Object.assign(currentModel.characteristics[nodeId], updates);
+        console.log('Updated currentModel.characteristics[' + nodeId + ']:', currentModel.characteristics[nodeId]);
     }
 
     // Update tree node text
@@ -420,6 +536,12 @@ function setupEventHandlers() {
     $('#addEntityBtn').off('click').on('click', function() {
         console.log('Add Entity clicked');
         addEntity();
+    });
+
+    // Add Characteristic button
+    $('#addCharacteristicBtn').off('click').on('click', function() {
+        console.log('Add Characteristic clicked');
+        addCharacteristic();
     });
 
     // Delete button
@@ -493,6 +615,8 @@ function updateToolbarButtons() {
     $('#addPropertyBtn').prop('disabled', !isAspect && !isEntity);
     // +Entity button: enabled only for Aspect
     $('#addEntityBtn').prop('disabled', !isAspect);
+    // +Characteristic button: enabled only for Aspect
+    $('#addCharacteristicBtn').prop('disabled', !isAspect);
     $('#deleteNodeBtn').prop('disabled', !isDeletable);
 
     console.log('Toolbar updated - nodeType:', nodeType, 'isAspect:', isAspect, 'isEntity:', isEntity, 'isDeletable:', isDeletable);
@@ -570,6 +694,28 @@ function addEntity() {
     showMessage('Entity added', 'success');
 }
 
+function addCharacteristic() {
+    console.log('Adding characteristic...');
+    const newId = 'Characteristic' + Date.now();
+    const newCharacteristic = {
+        id: newId,
+        urn: currentModel.namespace + newId,
+        type: 'characteristic',
+        preferredName: { en: 'New Characteristic' },
+        description: { en: '' },
+        characteristicType: 'Text',
+        dataType: 'xsd:string'
+    };
+
+    currentModel.characteristics[newId] = newCharacteristic;
+
+    console.log('Characteristic added:', newCharacteristic);
+    console.log('Current model:', currentModel);
+
+    buildTree();
+    showMessage('Characteristic added', 'success');
+}
+
 function deleteNode() {
     if (!selectedNode) {
         console.error('No node selected');
@@ -621,6 +767,9 @@ function deleteNode() {
     } else if (nodeType === 'entity') {
         delete currentModel.entities[nodeId];
         console.log('Entity deleted:', nodeId);
+    } else if (nodeType === 'characteristic') {
+        delete currentModel.characteristics[nodeId];
+        console.log('Characteristic deleted:', nodeId);
     }
 
     buildTree();
