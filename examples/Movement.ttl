@@ -1,0 +1,30 @@
+@prefix : <urn:samm:com.example.myapplication:1.0.0#> .
+@prefix samm: <urn:samm:org.eclipse.esmf.samm:meta-model:2.2.0#> .
+@prefix samm-c: <urn:samm:org.eclipse.esmf.samm:characteristic:2.2.0#> .
+@prefix samm-e: <urn:samm:org.eclipse.esmf.samm:entity:2.2.0#> .
+@prefix unit: <urn:samm:org.eclipse.esmf.samm:unit:2.2.0#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:Movement a samm:Aspect ;
+    samm:preferredName "Movement"@en ;
+    samm:description "Describes the movement status and speed of an object"@en ;
+    samm:properties ( :isMoving :speed ) .
+
+:isMoving a samm:Property ;
+    samm:preferredName "Is Moving"@en ;
+    samm:description "Indicates whether the object is currently moving"@en ;
+    samm:characteristic samm-c:Boolean ;
+    samm:exampleValue true .
+
+:speed a samm:Property ;
+    samm:preferredName "Speed"@en ;
+    samm:description "The current speed of the object"@en ;
+    samm:characteristic :Speed ;
+    samm:exampleValue 0.5 .
+
+:Speed a samm-c:Measurement ;
+    samm:preferredName "Speed"@en ;
+    samm:description "Speed measurement in kilometers per hour"@en ;
+    samm:dataType xsd:float ;
+    samm-c:unit unit:kilometrePerHour .

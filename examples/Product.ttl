@@ -1,0 +1,57 @@
+@prefix : <urn:samm:com.example.products:1.0.0#> .
+@prefix samm: <urn:samm:org.eclipse.esmf.samm:meta-model:2.2.0#> .
+@prefix samm-c: <urn:samm:org.eclipse.esmf.samm:characteristic:2.2.0#> .
+@prefix samm-e: <urn:samm:org.eclipse.esmf.samm:entity:2.2.0#> .
+@prefix unit: <urn:samm:org.eclipse.esmf.samm:unit:2.2.0#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:ProductCatalog a samm:Aspect ;
+    samm:preferredName "Product Catalog"@en ;
+    samm:description "A catalog containing product information"@en ;
+    samm:properties ( :products ) .
+
+:products a samm:Property ;
+    samm:preferredName "Products"@en ;
+    samm:description "List of products in the catalog"@en ;
+    samm:characteristic :ProductList .
+
+:ProductList a samm-c:List ;
+    samm:preferredName "Product List"@en ;
+    samm:description "A list of products"@en ;
+    samm:dataType :Product .
+
+:Product a samm:Entity ;
+    samm:preferredName "Product"@en ;
+    samm:description "A product with its details"@en ;
+    samm:properties ( :productId :productName :price :inStock ) .
+
+:productId a samm:Property ;
+    samm:preferredName "Product ID"@en ;
+    samm:description "Unique identifier for the product"@en ;
+    samm:characteristic samm-c:Text ;
+    samm:exampleValue "PROD-123" .
+
+:productName a samm:Property ;
+    samm:preferredName "Product Name"@en ;
+    samm:description "Name of the product"@en ;
+    samm:characteristic samm-c:Text ;
+    samm:exampleValue "Widget" .
+
+:price a samm:Property ;
+    samm:preferredName "Price"@en ;
+    samm:description "Price of the product in euros"@en ;
+    samm:characteristic :Price ;
+    samm:exampleValue 29.99 .
+
+:Price a samm-c:Measurement ;
+    samm:preferredName "Price"@en ;
+    samm:description "Price in euros"@en ;
+    samm:dataType xsd:decimal ;
+    samm-c:unit unit:euro .
+
+:inStock a samm:Property ;
+    samm:preferredName "In Stock"@en ;
+    samm:description "Whether the product is in stock"@en ;
+    samm:characteristic samm-c:Boolean ;
+    samm:exampleValue true .
