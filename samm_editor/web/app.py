@@ -97,8 +97,23 @@ def parse_turtle():
                 prop_info['characteristicType'] = char_type
             info['properties'].append(prop_info)
 
-        for char_urn in model.characteristics.keys():
-            info['characteristics'].append(char_urn)
+        for char_urn, char in model.characteristics.items():
+            char_info = {
+                'urn': char_urn,
+                'id': char_urn.split('#')[1] if '#' in char_urn else char_urn,
+                'preferredName': char.preferred_name.values if char.preferred_name else {'en': ''},
+                'description': char.description.values if char.description else {'en': ''},
+                'characteristicType': char.characteristic_type if hasattr(char, 'characteristic_type') else 'Text',
+                'dataType': char.data_type if hasattr(char, 'data_type') else ''
+            }
+            # Add type-specific fields
+            if hasattr(char, 'unit') and char.unit:
+                char_info['unit'] = char.unit
+            if hasattr(char, 'values') and char.values:
+                char_info['values'] = char.values
+            if hasattr(char, 'element_characteristic') and char.element_characteristic:
+                char_info['elementCharacteristic'] = char.element_characteristic
+            info['characteristics'].append(char_info)
 
         return jsonify({
             'success': True,

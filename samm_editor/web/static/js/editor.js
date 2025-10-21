@@ -851,6 +851,24 @@ async function loadTurtleContent(turtleContent, sourceName = 'file') {
             });
         }
 
+        // Populate characteristics
+        if (parseData.info.characteristics) {
+            parseData.info.characteristics.forEach(char => {
+                currentModel.characteristics[char.id] = {
+                    id: char.id,
+                    urn: char.urn,
+                    type: 'characteristic',
+                    preferredName: char.preferredName || { en: '' },
+                    description: char.description || { en: '' },
+                    characteristicType: char.characteristicType || 'Text',
+                    dataType: char.dataType || '',
+                    unit: char.unit || '',
+                    values: char.values || [],
+                    elementCharacteristic: char.elementCharacteristic || ''
+                };
+            });
+        }
+
         // Create aspect with property references
         if (parseData.info.aspect) {
             const aspectId = parseData.info.aspect.urn.split('#')[1];
