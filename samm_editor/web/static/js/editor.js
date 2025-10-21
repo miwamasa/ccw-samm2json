@@ -81,6 +81,15 @@ function buildTree() {
         updateToolbarButtons();
     });
 
+    // Auto-select Aspect node after tree is ready
+    $('#treeView').off('ready.jstree').on('ready.jstree', function() {
+        console.log('Tree ready, selecting aspect...');
+        if (currentModel.aspect) {
+            const aspectNodeId = 'aspect_' + currentModel.aspect.id;
+            $('#treeView').jstree('select_node', aspectNodeId);
+        }
+    });
+
     console.log('Tree built successfully');
 }
 
@@ -388,13 +397,13 @@ function updateToolbarButtons() {
     const hasSelection = selectedNode !== null;
     const isAspect = selectedNode && selectedNode.type === 'aspect';
     const isFolder = selectedNode && selectedNode.type === 'folder';
-    const isDeletable = hasSelection && !isAspect && !isFolder;
+    const isDeletable = hasSelection && !isAspect && !isFolder && selectedNode.data;
 
     $('#addPropertyBtn').prop('disabled', !isAspect);
     $('#addEntityBtn').prop('disabled', !isAspect);
     $('#deleteNodeBtn').prop('disabled', !isDeletable);
 
-    console.log('Toolbar updated - isAspect:', isAspect, 'isDeletable:', isDeletable);
+    console.log('Toolbar updated - isAspect:', isAspect, 'isFolder:', isFolder, 'isDeletable:', isDeletable);
 }
 
 function addProperty() {
