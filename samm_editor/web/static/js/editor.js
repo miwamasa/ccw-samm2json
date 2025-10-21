@@ -436,6 +436,17 @@ function setupEventHandlers() {
         loadExample(exampleName);
     });
 
+    // Import file handler
+    $('#importFileInput').off('change').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            console.log('Importing file:', file.name);
+            importTurtleFile(file);
+        }
+        // Reset input so same file can be imported again
+        this.value = '';
+    });
+
     // Generate Turtle
     $('#generateTurtleBtn').off('click').on('click', function() {
         console.log('Generate Turtle clicked');
@@ -619,6 +630,106 @@ function deleteNode() {
     showMessage('Deleted', 'success');
 }
 
+async function importTurtleFile(file) {
+    console.log('Importing Turtle file:', file.name);
+    try {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const turtleContent = e.target.result;
+            await loadTurtleContent(turtleContent, file.name);
+        };
+        reader.readAsText(file);
+    } catch (error) {
+        console.error('Import error:', error);
+        showMessage('Import error: ' + error.message, 'danger');
+    }
+}
+
+async function loadTurtleContent(turtleContent, sourceName = 'file') {
+    console.log('Loading Turtle content from:', sourceName);
+    try {
+        // Store the turtle content
+        currentModel._originalTurtle = turtleContent;
+
+        // Parse to get basic info and rebuild tree
+        const parseResult = await fetch('/api/parse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ turtle: turtleContent })
+        });
+
+        const parseData = await parseResult.json();
+        console.log('Parse result:', parseData);
+
+        if (!parseData.success) {
+            showMessage('Parse error: ' + (parseData.error || 'Unknown error'), 'danger');
+            return;
+        }
+
+        // Create model from parsed data
+        currentModel.namespace = parseData.info.namespace;
+        currentModel.properties = {};
+        currentModel.entities = {};
+        currentModel.characteristics = {};
+
+        // Populate properties
+        if (parseData.info.properties) {
+            parseData.info.properties.forEach(prop => {
+                currentModel.properties[prop.id] = {
+                    id: prop.id,
+                    urn: prop.urn,
+                    type: 'property',
+                    preferredName: prop.preferredName || { en: '' },
+                    description: prop.description || { en: '' },
+                    characteristicType: prop.characteristicType || 'Text',
+                    optional: prop.optional || false
+                };
+            });
+        }
+
+        // Populate entities
+        if (parseData.info.entities) {
+            parseData.info.entities.forEach(entity => {
+                currentModel.entities[entity.id] = {
+                    id: entity.id,
+                    urn: entity.urn,
+                    type: 'entity',
+                    preferredName: entity.preferredName || { en: '' },
+                    description: entity.description || { en: '' },
+                    isAbstract: entity.isAbstract || false,
+                    properties: entity.properties || []
+                };
+            });
+        }
+
+        // Create aspect with property references
+        if (parseData.info.aspect) {
+            const aspectId = parseData.info.aspect.urn.split('#')[1];
+            currentModel.aspect = {
+                id: aspectId,
+                urn: parseData.info.aspect.urn,
+                type: 'aspect',
+                preferredName: { en: parseData.info.aspect.name },
+                description: { en: parseData.info.aspect.description },
+                properties: parseData.info.aspect.properties || [],
+                operations: [],
+                events: []
+            };
+        }
+
+        console.log('Model fully loaded:', currentModel);
+        buildTree();
+
+        // Auto-generate turtle in output
+        $('#turtleOutput').text(turtleContent);
+
+        showMessage(`Loaded from ${sourceName}`, 'success');
+    } catch (error) {
+        console.error('Load error:', error);
+        showMessage('Load error: ' + error.message, 'danger');
+    }
+}
+
 async function loadExample(exampleName) {
     console.log('Loading example:', exampleName);
     try {
@@ -628,79 +739,7 @@ async function loadExample(exampleName) {
         console.log('Example loaded:', result);
 
         if (result.success) {
-            // Simply store the turtle and mark that we have original content
-            currentModel._originalTurtle = result.turtle;
-
-            // Parse to get basic info and rebuild simple tree
-            const parseResult = await fetch('/api/parse', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ turtle: result.turtle })
-            });
-
-            const parseData = await parseResult.json();
-            console.log('Parse result:', parseData);
-
-            if (parseData.success) {
-                // Create model from parsed data
-                currentModel.namespace = parseData.info.namespace;
-                currentModel.properties = {};
-                currentModel.entities = {};
-                currentModel.characteristics = {};
-
-                // Populate properties
-                if (parseData.info.properties) {
-                    parseData.info.properties.forEach(prop => {
-                        currentModel.properties[prop.id] = {
-                            id: prop.id,
-                            urn: prop.urn,
-                            type: 'property',
-                            preferredName: prop.preferredName || { en: '' },
-                            description: prop.description || { en: '' },
-                            characteristicType: prop.characteristicType || 'Text',
-                            optional: prop.optional || false
-                        };
-                    });
-                }
-
-                // Populate entities
-                if (parseData.info.entities) {
-                    parseData.info.entities.forEach(entity => {
-                        currentModel.entities[entity.id] = {
-                            id: entity.id,
-                            urn: entity.urn,
-                            type: 'entity',
-                            preferredName: entity.preferredName || { en: '' },
-                            description: entity.description || { en: '' },
-                            isAbstract: entity.isAbstract || false,
-                            properties: entity.properties || []
-                        };
-                    });
-                }
-
-                // Create aspect with property references
-                if (parseData.info.aspect) {
-                    const aspectId = parseData.info.aspect.urn.split('#')[1];
-                    currentModel.aspect = {
-                        id: aspectId,
-                        urn: parseData.info.aspect.urn,
-                        type: 'aspect',
-                        preferredName: { en: parseData.info.aspect.name },
-                        description: { en: parseData.info.aspect.description },
-                        properties: parseData.info.aspect.properties || [],
-                        operations: [],
-                        events: []
-                    };
-                }
-
-                console.log('Model fully loaded:', currentModel);
-                buildTree();
-
-                // Auto-generate turtle in output
-                $('#turtleOutput').text(result.turtle);
-
-                showMessage(`Example "${exampleName}" loaded`, 'success');
-            }
+            await loadTurtleContent(result.turtle, `example "${exampleName}"`);
         }
     } catch (error) {
         console.error('Load error:', error);
