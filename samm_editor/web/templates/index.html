@@ -135,6 +135,9 @@
                             <button type="button" class="btn btn-info" id="addEntityBtn" disabled>
                                 + Entity
                             </button>
+                            <button type="button" class="btn btn-warning" id="addCharacteristicBtn" disabled>
+                                + Characteristic
+                            </button>
                         </div>
                         <div class="btn-group btn-group-sm me-2" role="group">
                             <button type="button" class="btn btn-danger" id="deleteNodeBtn" disabled>
@@ -149,6 +152,12 @@
                                 <li><a class="dropdown-item load-example" href="#" data-example="Movement">Movement</a></li>
                                 <li><a class="dropdown-item load-example" href="#" data-example="Product">Product</a></li>
                             </ul>
+                        </div>
+                        <div class="btn-group btn-group-sm ms-2" role="group">
+                            <label for="importFileInput" class="btn btn-outline-primary mb-0">
+                                📥 Import
+                            </label>
+                            <input type="file" id="importFileInput" accept=".ttl,.turtle" style="display: none;">
                         </div>
                     </div>
 
