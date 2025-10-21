@@ -154,13 +154,44 @@ function modelToTreeData(model) {
 
         Object.keys(model.entities).forEach(entityId => {
             const entity = model.entities[entityId];
-            entitiesFolder.children.push({
+            const entityNode = {
                 id: 'entity_' + entityId,
                 text: entity.preferredName?.en || entityId,
                 type: 'entity',
                 icon: '📄',
-                data: entity
-            });
+                data: entity,
+                state: { opened: true },
+                children: []
+            };
+
+            // Add entity's properties as children
+            if (entity.properties && entity.properties.length > 0) {
+                const entityPropsFolder = {
+                    id: 'folder_entity_properties_' + entityId,
+                    text: 'Properties (' + entity.properties.length + ')',
+                    type: 'folder',
+                    icon: '📁',
+                    state: { opened: true },
+                    children: []
+                };
+
+                entity.properties.forEach(propId => {
+                    const prop = model.properties[propId];
+                    if (prop) {
+                        entityPropsFolder.children.push({
+                            id: 'entity_property_' + entityId + '_' + propId,
+                            text: prop.preferredName?.en || propId,
+                            type: 'property',
+                            icon: '🔹',
+                            data: prop
+                        });
+                    }
+                });
+
+                entityNode.children.push(entityPropsFolder);
+            }
+
+            entitiesFolder.children.push(entityNode);
         });
 
         aspectNode.children.push(entitiesFolder);
@@ -265,6 +296,20 @@ function buildPropertyForm(property) {
 }
 
 function buildEntityForm(entity) {
+    // Build properties list display
+    let propertiesHtml = '';
+    if (entity.properties && entity.properties.length > 0) {
+        propertiesHtml = '<div class="form-group"><label class="form-label">Properties</label><ul class="list-group list-group-sm">';
+        entity.properties.forEach(propId => {
+            const prop = currentModel.properties[propId];
+            const propName = prop ? (prop.preferredName?.en || propId) : propId;
+            propertiesHtml += `<li class="list-group-item list-group-item-sm py-1">${propName}</li>`;
+        });
+        propertiesHtml += '</ul><small class="form-text text-muted">ツリーから+Propertyボタンでプロパティを追加できます</small></div>';
+    } else {
+        propertiesHtml = '<div class="form-group"><label class="form-label">Properties</label><p class="text-muted small">プロパティなし（+Propertyボタンで追加）</p></div>';
+    }
+
     return `
         <form id="nodeForm">
             <div class="form-group">
@@ -283,6 +328,7 @@ function buildEntityForm(entity) {
                 <input class="form-check-input" type="checkbox" name="isAbstract" id="abstractCheck" ${entity.isAbstract ? 'checked' : ''}>
                 <label class="form-check-label" for="abstractCheck">Abstract Entity</label>
             </div>
+            ${propertiesHtml}
             <button type="submit" class="btn btn-primary btn-sm mt-3">保存</button>
         </form>
     `;
@@ -428,18 +474,30 @@ function updateToolbarButtons() {
     const nodeData = selectedNode ? (selectedNode.data || (selectedNode.original ? selectedNode.original.data : null)) : null;
 
     const isAspect = nodeType === 'aspect';
+    const isEntity = nodeType === 'entity';
     const isFolder = nodeType === 'folder';
     const isDeletable = hasSelection && !isAspect && !isFolder && nodeData;
 
-    $('#addPropertyBtn').prop('disabled', !isAspect);
+    // +Property button: enabled for Aspect OR Entity
+    $('#addPropertyBtn').prop('disabled', !isAspect && !isEntity);
+    // +Entity button: enabled only for Aspect
     $('#addEntityBtn').prop('disabled', !isAspect);
     $('#deleteNodeBtn').prop('disabled', !isDeletable);
 
-    console.log('Toolbar updated - nodeType:', nodeType, 'isAspect:', isAspect, 'isFolder:', isFolder, 'isDeletable:', isDeletable);
+    console.log('Toolbar updated - nodeType:', nodeType, 'isAspect:', isAspect, 'isEntity:', isEntity, 'isDeletable:', isDeletable);
 }
 
 function addProperty() {
     console.log('Adding property...');
+    const nodeType = selectedNode ? (selectedNode.type || (selectedNode.original ? selectedNode.original.type : null)) : null;
+    const nodeData = selectedNode ? (selectedNode.data || (selectedNode.original ? selectedNode.original.data : null)) : null;
+
+    if (!nodeType || (nodeType !== 'aspect' && nodeType !== 'entity')) {
+        console.error('Cannot add property - no aspect or entity selected');
+        showMessage('AspectまたはEntityを選択してください', 'warning');
+        return;
+    }
+
     const newId = 'property' + Date.now();
     const newProperty = {
         id: newId,
@@ -451,10 +509,28 @@ function addProperty() {
         optional: false
     };
 
+    // Add to global properties
     currentModel.properties[newId] = newProperty;
-    currentModel.aspect.properties.push(newId);
 
-    console.log('Property added:', newProperty);
+    // Add to aspect or entity
+    if (nodeType === 'aspect') {
+        currentModel.aspect.properties.push(newId);
+        console.log('Property added to aspect:', newProperty);
+    } else if (nodeType === 'entity' && nodeData) {
+        if (!nodeData.properties) {
+            nodeData.properties = [];
+        }
+        nodeData.properties.push(newId);
+        // Also update the entity in currentModel.entities
+        if (currentModel.entities[nodeData.id]) {
+            if (!currentModel.entities[nodeData.id].properties) {
+                currentModel.entities[nodeData.id].properties = [];
+            }
+            currentModel.entities[nodeData.id].properties.push(newId);
+        }
+        console.log('Property added to entity:', nodeData.id, newProperty);
+    }
+
     console.log('Current model:', currentModel);
 
     buildTree();
@@ -505,11 +581,31 @@ function deleteNode() {
     const nodeId = nodeData.id;
 
     if (nodeType === 'property') {
-        delete currentModel.properties[nodeId];
-        const index = currentModel.aspect.properties.indexOf(nodeId);
-        if (index > -1) {
-            currentModel.aspect.properties.splice(index, 1);
+        // Check if this is an entity property (node id starts with 'entity_property_')
+        if (selectedNode.id.startsWith('entity_property_')) {
+            // Extract entity ID from node id: entity_property_EntityID_PropertyID
+            const parts = selectedNode.id.split('_');
+            if (parts.length >= 4) {
+                const entityId = parts[2];
+                const entity = currentModel.entities[entityId];
+                if (entity && entity.properties) {
+                    const index = entity.properties.indexOf(nodeId);
+                    if (index > -1) {
+                        entity.properties.splice(index, 1);
+                        console.log('Property removed from entity:', entityId, nodeId);
+                    }
+                }
+            }
+        } else {
+            // This is an aspect property
+            const index = currentModel.aspect.properties.indexOf(nodeId);
+            if (index > -1) {
+                currentModel.aspect.properties.splice(index, 1);
+                console.log('Property removed from aspect:', nodeId);
+            }
         }
+        // Remove from global properties
+        delete currentModel.properties[nodeId];
         console.log('Property deleted:', nodeId);
     } else if (nodeType === 'entity') {
         delete currentModel.entities[nodeId];
