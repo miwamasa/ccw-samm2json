@@ -4,6 +4,7 @@ A Python-based tool for editing SAMM (Semantic Aspect Meta Model) models in Turt
 
 ## Features
 
+- **Web-based editor**: Interactive browser-based editor with live preview
 - **Read and write Turtle files**: Parse and serialize SAMM Aspect Models in RDF/Turtle format
 - **Generate JSON Schema**: Automatically generate JSON Schema from SAMM models according to the SAMM specification
 - **Generate JSON instances**: Create example JSON instances based on your SAMM models
@@ -20,6 +21,30 @@ pip install -e .
 ```
 
 ## Usage
+
+### Web-based Editor
+
+Launch the interactive web editor:
+
+```bash
+# Using the run script
+python run_web.py
+
+# Or using the CLI command
+python -m samm_editor.cli web
+
+# With custom host/port
+python -m samm_editor.cli web --host 0.0.0.0 --port 8000
+```
+
+Then open your browser and navigate to `http://127.0.0.1:5000`
+
+The web editor provides:
+- Syntax-highlighted Turtle editor with CodeMirror
+- Real-time model parsing and validation
+- Live JSON Schema and JSON instance generation
+- Sample model loading
+- Download/copy generated outputs
 
 ### Command-line Interface
 

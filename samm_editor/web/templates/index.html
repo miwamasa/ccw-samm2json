@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMM Model Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <style>
+        .CodeMirror {
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .result-area {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 100px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .nav-tabs {
+            margin-bottom: 15px;
+        }
+        .btn-group {
+            margin-bottom: 10px;
+        }
+        .alert {
+            margin-top: 15px;
+        }
+        .info-box {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .info-box h6 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        .info-box .info-item {
+            margin-bottom: 8px;
+        }
+        .info-box .badge {
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">SAMM Model Editor</span>
+            <span class="navbar-text text-white">
+                Semantic Aspect Meta Model エディタ
+            </span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Left Panel: Turtle Editor -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Turtle Editor</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Toolbar -->
+                        <div class="btn-toolbar mb-3" role="toolbar">
+                            <div class="btn-group me-2" role="group">
+                                <button type="button" class="btn btn-sm btn-success" id="validateBtn">
+                                    <i class="bi bi-check-circle"></i> 検証
+                                </button>
+                                <button type="button" class="btn btn-sm btn-info" id="parseBtn">
+                                    <i class="bi bi-info-circle"></i> パース
+                                </button>
+                            </div>
+                            <div class="btn-group me-2" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="clearBtn">
+                                    クリア
+                                </button>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                    サンプル読み込み
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item load-example" href="#" data-example="Movement">Movement (シンプル)</a></li>
+                                    <li><a class="dropdown-item load-example" href="#" data-example="Product">Product (Entity含む)</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Turtle Editor -->
+                        <textarea id="turtleEditor" name="turtle"></textarea>
+
+                        <!-- Model Info -->
+                        <div id="modelInfo" class="info-box" style="display: none;">
+                            <h6>モデル情報</h6>
+                            <div id="modelInfoContent"></div>
+                        </div>
+
+                        <!-- Messages -->
+                        <div id="messageArea"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: JSON Output -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">JSON Output</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tabs -->
+                        <ul class="nav nav-tabs" id="outputTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="schema-tab" data-bs-toggle="tab" data-bs-target="#schema-pane" type="button" role="tab">
+                                    JSON Schema
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="instance-tab" data-bs-toggle="tab" data-bs-target="#instance-pane" type="button" role="tab">
+                                    JSON Instance
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="outputTabContent">
+                            <!-- Schema Tab -->
+                            <div class="tab-pane fade show active" id="schema-pane" role="tabpanel">
+                                <div class="btn-group mt-3 mb-2" role="group">
+                                    <button type="button" class="btn btn-sm btn-primary" id="generateSchemaBtn">
+                                        生成
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="copySchemaBtn">
+                                        コピー
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="downloadSchemaBtn">
+                                        ダウンロード
+                                    </button>
+                                </div>
+                                <div class="result-area">
+                                    <pre id="schemaOutput" class="language-json"><code>// JSON Schema がここに表示されます</code></pre>
+                                </div>
+                            </div>
+
+                            <!-- Instance Tab -->
+                            <div class="tab-pane fade" id="instance-pane" role="tabpanel">
+                                <div class="btn-group mt-3 mb-2" role="group">
+                                    <button type="button" class="btn btn-sm btn-primary" id="generateInstanceBtn">
+                                        生成
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="copyInstanceBtn">
+                                        コピー
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="downloadInstanceBtn">
+                                        ダウンロード
+                                    </button>
+                                </div>
+                                <div class="result-area">
+                                    <pre id="instanceOutput" class="language-json"><code>// JSON Instance がここに表示されます</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/turtle/turtle.min.js"></script>
+
+    <script>
+        // Initialize CodeMirror for Turtle editor
+        const editor = CodeMirror.fromTextArea(document.getElementById('turtleEditor'), {
+            mode: 'turtle',
+            theme: 'monokai',
+            lineNumbers: true,
+            lineWrapping: true,
+            autoCloseBrackets: true,
+            matchBrackets: true
+        });
+
+        // Set default content
+        editor.setValue(`@prefix : <urn:samm:com.example:1.0.0#> .
+@prefix samm: <urn:samm:org.eclipse.esmf.samm:meta-model:2.2.0#> .
+@prefix samm-c: <urn:samm:org.eclipse.esmf.samm:characteristic:2.2.0#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:MyAspect a samm:Aspect ;
+    samm:preferredName "My Aspect"@en ;
+    samm:description "Example aspect model"@en ;
+    samm:properties ( :myProperty ) .
+
+:myProperty a samm:Property ;
+    samm:preferredName "My Property"@en ;
+    samm:description "An example property"@en ;
+    samm:characteristic samm-c:Text .
+`);
+
+        // Helper function to show messages
+        function showMessage(message, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            messageArea.appendChild(alertDiv);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Helper function to make API calls
+        async function apiCall(endpoint, data) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'API call failed');
+                }
+
+                return result;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Parse button handler
+        document.getElementById('parseBtn').addEventListener('click', async () => {
+            const turtle = editor.getValue();
+
+            try {
+                const result = await apiCall('/api/parse', { turtle });
+
+                if (result.success) {
+                    displayModelInfo(result.info);
+                    showMessage('モデルのパースに成功しました', 'success');
+                } else {
+                    showMessage('エラー: ' + result.error, 'danger');
+                }
+            } catch (error) {
+                showMessage('パースエラー: ' + error.message, 'danger');
+            }
+        });
+
+        // Validate button handler
+        document.getElementById('validateBtn').addEventListener('click', async () => {
+            const turtle = editor.getValue();
+
+            try {
+                const result = await apiCall('/api/validate', { turtle });
+
+                if (result.success) {
+                    if (result.valid) {
+                        showMessage('✓ モデルは有効です', 'success');
+                    } else {
+                        let msg = '検証エラー:\n';
+                        result.errors.forEach(err => msg += '• ' + err + '\n');
+                        showMessage(msg, 'danger');
+                    }
+
+                    if (result.warnings && result.warnings.length > 0) {
+                        let msg = '警告:\n';
+                        result.warnings.forEach(warn => msg += '• ' + warn + '\n');
+                        showMessage(msg, 'warning');
+                    }
+                } else {
+                    showMessage('検証エラー: ' + result.error, 'danger');
+                }
+            } catch (error) {
+                showMessage('検証エラー: ' + error.message, 'danger');
+            }
+        });
+
+        // Generate Schema button handler
+        document.getElementById('generateSchemaBtn').addEventListener('click', async () => {
+            const turtle = editor.getValue();
+
+            try {
+                const result = await apiCall('/api/generate-schema', { turtle });
+
+                if (result.success) {
+                    const formatted = JSON.stringify(result.schema, null, 2);
+                    document.getElementById('schemaOutput').textContent = formatted;
+                    showMessage('JSON Schema を生成しました', 'success');
+                } else {
+                    showMessage('生成エラー: ' + result.error, 'danger');
+                }
+            } catch (error) {
+                showMessage('生成エラー: ' + error.message, 'danger');
+            }
+        });
+
+        // Generate Instance button handler
+        document.getElementById('generateInstanceBtn').addEventListener('click', async () => {
+            const turtle = editor.getValue();
+
+            try {
+                const result = await apiCall('/api/generate-instance', { turtle });
+
+                if (result.success) {
+                    const formatted = JSON.stringify(result.instance, null, 2);
+                    document.getElementById('instanceOutput').textContent = formatted;
+                    showMessage('JSON Instance を生成しました', 'success');
+                } else {
+                    showMessage('生成エラー: ' + result.error, 'danger');
+                }
+            } catch (error) {
+                showMessage('生成エラー: ' + error.message, 'danger');
+            }
+        });
+
+        // Copy buttons
+        document.getElementById('copySchemaBtn').addEventListener('click', () => {
+            const text = document.getElementById('schemaOutput').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('クリップボードにコピーしました', 'success');
+            });
+        });
+
+        document.getElementById('copyInstanceBtn').addEventListener('click', () => {
+            const text = document.getElementById('instanceOutput').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('クリップボードにコピーしました', 'success');
+            });
+        });
+
+        // Download buttons
+        document.getElementById('downloadSchemaBtn').addEventListener('click', () => {
+            const text = document.getElementById('schemaOutput').textContent;
+            downloadFile(text, 'schema.json', 'application/json');
+        });
+
+        document.getElementById('downloadInstanceBtn').addEventListener('click', () => {
+            const text = document.getElementById('instanceOutput').textContent;
+            downloadFile(text, 'instance.json', 'application/json');
+        });
+
+        // Helper function to download files
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Clear button
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('エディタの内容をクリアしますか？')) {
+                editor.setValue('');
+                document.getElementById('modelInfo').style.display = 'none';
+            }
+        });
+
+        // Load example handlers
+        document.querySelectorAll('.load-example').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const exampleName = e.target.getAttribute('data-example');
+
+                try {
+                    const response = await fetch(`/api/load-example/${exampleName}`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        editor.setValue(result.turtle);
+                        showMessage(`サンプル "${result.name}" を読み込みました`, 'success');
+                    } else {
+                        showMessage('読み込みエラー: ' + result.error, 'danger');
+                    }
+                } catch (error) {
+                    showMessage('読み込みエラー: ' + error.message, 'danger');
+                }
+            });
+        });
+
+        // Display model info
+        function displayModelInfo(info) {
+            const infoDiv = document.getElementById('modelInfo');
+            const contentDiv = document.getElementById('modelInfoContent');
+
+            let html = '';
+
+            if (info.namespace) {
+                html += `<div class="info-item"><strong>Namespace:</strong> <code>${info.namespace}</code></div>`;
+            }
+
+            if (info.aspect) {
+                html += `<div class="info-item">
+                    <strong>Aspect:</strong> ${info.aspect.name || 'Unnamed'}
+                    <span class="badge bg-primary">${info.aspect.properties_count} props</span>
+                    <span class="badge bg-info">${info.aspect.operations_count} ops</span>
+                    <span class="badge bg-warning">${info.aspect.events_count} events</span>
+                </div>`;
+
+                if (info.aspect.description) {
+                    html += `<div class="info-item"><em>${info.aspect.description}</em></div>`;
+                }
+            }
+
+            if (info.entities && info.entities.length > 0) {
+                html += `<div class="info-item"><strong>Entities:</strong> ${info.entities.length}</div>`;
+                info.entities.forEach(entity => {
+                    html += `<div class="info-item ms-3">• ${entity.name || 'Unnamed'}
+                        <span class="badge bg-secondary">${entity.properties_count} props</span>
+                        ${entity.is_abstract ? '<span class="badge bg-warning">abstract</span>' : ''}
+                    </div>`;
+                });
+            }
+
+            contentDiv.innerHTML = html;
+            infoDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
